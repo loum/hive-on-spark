@@ -1,0 +1,3 @@
+[submodule "makester"]
+	path = makester
+	url = https://github.com/loum/makester.git
