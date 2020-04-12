@@ -1,0 +1,71 @@
+*.py[cod]
+*.swp
+*.swo
+
+# C extensions
+*.so
+!pyodbc.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+eggs
+parts
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Local virtual environment
+venv
+2env
+3env
+
+# py.test
+.cache
+.pytest_cache
+
+# Vagrant
+.vagrant
+
+# SonarQube
+.scannerwork
+
+# PyCharm
+.idea
+
+# Junit
+junit.xml
+
+# Docker test env file
+test.env
+
+# Spark
+derby.log
+metastore_db
+
+# CNP
+.data-kafka-connect/*.processed
+
+# Kafka Connect dynamically created connector configs
+*s3.properties.json

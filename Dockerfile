@@ -1,37 +1,82 @@
-FROM loum/hadoop-hive:3.1.2
+ARG SPARK_TAG=hadoop3-1-without-hive
+ARG SPARK_VERSION=spark-2.4.5-bin-${SPARK_TAG}
 
-ARG SPARK_VERSION=spark-3.0.0-preview2
-RUN wget -p /tmp http://apache.mirror.digitalpacific.com.au/spark/${SPARK_VERSION}/${SPARK_VERSION}-bin-hadoop3.2.tgz
+FROM ubuntu:bionic-20200311 AS builder
 
-RUN tar xzf /tmp/${SPARK_VERSION}-bin-hadoop3.2.tar.gz -C /opt && \
-  ln -s /opt/apache-${SPARK_VERSION}-bin-hadoop3.2 /opt/spark && \
-  rm /tmp/${SPARK_VERSION}-bin-hadoop3.2.tar.gz && \
-  chown -R root:root /opt/${SPARK_VERSION}-bin-hadoop3.2
+RUN apt-get update && apt-get install -y --no-install-recommends\
+ git\
+ curl\
+ openjdk-8-jdk-headless=8u242-b08-0ubuntu3~18.04
 
-#ARG HIVE_VERSION=hive-3.1.2
+RUN git clone --depth 1 --branch v2.4.5 https://github.com/apache/spark.git
+WORKDIR /spark
+ARG SPARK_TAG
+ARG SPARK_VERSION
+RUN dev/make-distribution.sh --name "${SPARK_TAG}" --tgz "-Pyarn,hadoop-provided,hadoop-3.1,parquet-provided,orc-provided"
+RUN tar xzf "${SPARK_VERSION}.tgz" && chown -R root:root "${SPARK_VERSION}"
+
+### downloader layer end
+
+FROM loum/hadoop-hive:3.2.1-3.1.2-3
+
+USER root
+
+ARG SPARK_VERSION
+
+WORKDIR /opt
+
+COPY --from=builder "/spark/${SPARK_VERSION}" spark
+
+# Spark config.
+COPY files/spark-env.sh spark/conf/spark-env.sh
+COPY files/spark-defaults.conf spark/conf/spark-defaults.conf
+
+# Hadoop YARN
+RUN mv hadoop/etc/hadoop/yarn-site.xml hadoop/etc/hadoop/yarn-site.xml.orig
+COPY files/yarn-site.xml hadoop/etc/hadoop/yarn-site.xml
+
+# Set Hive configuration settings.
 #
-#RUN wget -P /tmp http://apache.mirror.serversaustralia.com.au/hive/${HIVE_VERSION}/apache-${HIVE_VERSION}-bin.tar.gz
-#RUN tar xzf /tmp/apache-${HIVE_VERSION}-bin.tar.gz -C /opt && \
-#  ln -s /opt/apache-${HIVE_VERSION}-bin /opt/hive && \
-#  rm /tmp/apache-${HIVE_VERSION}-bin.tar.gz && \
-#  chown -R root:root /opt/apache-${HIVE_VERSION}-bin
-#
-## Add Hive executables to hdfs user PATH.
-#USER hdfs
-#RUN sed -i 's/:$PATH/:\/opt\/hive\/bin:$PATH/' ~/.profile
-#
-## Temporary workaround for conflicting guava jars.
-##
-## See https://stackoverflow.com/questions/58176627/how-can-i-ask-hive-to-provide-more-detailed-error
-## for more detail.
-#USER root
-#RUN rm /opt/hive/lib/guava-19.0.jar && \
-#  cp /opt/hadoop/share/hadoop/common/lib/guava-27.0-jre.jar /opt/hive/lib/
-#
-#COPY files/hive-site.xml /opt/hive/conf/
-#
-#COPY scripts/hive-bootstrap.sh /hive-bootstrap.sh
-#CMD [ "/hive-bootstrap.sh" ]
-#
-## Hiverserver2 port.
-#EXPOSE 10000
+# hive.execution.engine mr => spark
+# hive.exec.parallel false => true
+RUN cp hive/conf/hive-site.xml hive/conf/hive-site.xml.bak
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN cat hive/conf/hive-site.xml.bak |\
+ sed -n '1h;1!H;${g;s|execution.engine</name>\n    <value>mr|execution.engine</name>\n    <value>spark|;p;}' |\
+ sed -n '1h;1!H;${g;s|exec.parallel</name>\n    <value>false|exec.parallel</name>\n    <value>true|;p;}'\
+ > hive/conf/hive-site.xml
+
+ARG SPARK_HOME=/opt/spark
+
+RUN ln -s ${SPARK_HOME}/jars/scala-library-2.11.12.jar hive/lib && \
+  ln -s ${SPARK_HOME}/jars/spark-core_2.11-2.4.5.jar hive/lib && \
+  ln -s ${SPARK_HOME}/jars/spark-unsafe_2.11-2.4.5.jar hive/lib && \
+  ln -s ${SPARK_HOME}/jars/spark-network-common_2.11-2.4.5.jar hive/lib
+
+COPY scripts/spark-bootstrap.sh /spark-bootstrap.sh
+
+# YARN ResourceManager port.
+EXPOSE 8032
+
+# YARN ResourceManager webapp port.
+EXPOSE 8088
+
+# YARN NodeManager webapp port.
+EXPOSE 8042
+
+# Spark HistoryServer web UI port.
+EXPOSE 18080
+
+# HiveServer2 port.
+EXPOSE 10000
+
+# Web UI for HiveServer2 port.
+EXPOSE 10002
+
+### start user run context.
+USER hdfs
+WORKDIR /home/hdfs
+
+RUN sed -i "s|^export PATH=|export PATH=${SPARK_HOME}\/bin:|" ~/.bashrc
+
+CMD [ "/spark-bootstrap.sh" ]
