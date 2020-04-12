@@ -16,6 +16,12 @@ do
     sleep $sleep_period
 done
 
+# Copy over the Spark JARs to HDFS.
+$HADOOP_HOME/bin/hdfs dfs -mkdir /tmp/spark
+$HADOOP_HOME/bin/hdfs dfs -mkdir /tmp/spark/yarn
+$HADOOP_HOME/bin/hdfs dfs -mkdir /tmp/spark/yarn/archive
+$HADOOP_HOME/bin/hdfs dfs -copyFromLocal /opt/spark/jars/* /tmp/spark/yarn/archive/
+
 if [ $loop_counter -lt $max_loops ]
 then
     $HADOOP_HOME/bin/hdfs dfs -mkdir /tmp/spark-events

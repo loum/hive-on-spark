@@ -13,7 +13,7 @@ MAKESTER__RUN_COMMAND := $(DOCKER) run --rm -d\
  --publish 8088:8088\
  --publish 8042:8042\
  --publish 18080:18080\
- --hostname localhost\
+ --hostname $(MAKESTER__CONTAINER_NAME)\
  --name $(MAKESTER__CONTAINER_NAME)\
  $(MAKESTER__SERVICE_NAME):$(HASH)
 
@@ -82,6 +82,14 @@ beeline-select: BEELINE_CMD = 'SELECT * FROM test;'
 beeline-drop: BEELINE_CMD = 'DROP TABLE test;'
 
 beeline-create beeline-show beeline-insert beeline-select beeline-drop: beeline-cmd
+
+pyspark: backoff
+	@$(DOCKER) exec -ti $(MAKESTER__CONTAINER_NAME)\
+ bash -c "/opt/spark/bin/pyspark"
+
+spark-shell: backoff
+	@$(DOCKER) exec -ti $(MAKESTER__CONTAINER_NAME)\
+ bash -c "/opt/spark/bin/spark-shell"
 
 help: base-help docker-help python-venv-help
 	@echo "(Makefile)\n\

@@ -78,3 +78,6 @@ export SPARK_LOG_DIR=/tmp/spark
 export SPARK_DIST_CLASSPATH=$(/opt/hadoop/bin/hadoop classpath)
 
 export SPARK_SSH_OPTS="-o StrictHostKeyChecking=no -p 2222"
+
+# To stop the “Unable to load native-hadoop library for your platform” in pyspark.
+export LD_LIBRARY_PATH=/opt/hadoop/lib/native

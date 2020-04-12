@@ -174,8 +174,29 @@ To drop the Hive table ``test``::
 
 Alternatively, port ``10000`` is exposed to allow connectivity to clients with JDBC.
 
+****************
+Only Need Spark?
+****************
+
+The `Spark computing system <https://spark.apache.org/docs/latest/index.html>`_ is available and can be invoked as per normal.
+
+``pyspark``
+===========
+
+::
+
+    $ make pyspark 
+
+``spark-shell``
+===============
+
+::
+
+    $ make spark-shell
+
+**************
 Web Interfaces
-==============
+**************
 
 The following web interfaces are available to view configurations and logs and to track YARN/Spark job submissions:
 

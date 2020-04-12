@@ -21,6 +21,15 @@ FROM loum/hadoop-hive:3.2.1-3.1.2-3
 
 USER root
 
+# Install python to support pyspark.
+ARG PYTHON_VERSION=3.7
+ARG PYTHON_APT_RELEASE=3.7.5-2~18.04
+RUN apt-get update && apt-get install -y --no-install-recommends\
+ "python${PYTHON_VERSION}"="${PYTHON_APT_RELEASE}" &&\
+ apt-get clean &&\
+ rm -rf /var/lib/apt/lists/* &&\
+ update-alternatives --install /usr/bin/python "python${PYTHON_VERSION}" "/usr/bin/python${PYTHON_VERSION}" 1
+
 ARG SPARK_VERSION
 
 WORKDIR /opt
