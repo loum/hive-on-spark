@@ -92,47 +92,17 @@ To start the container and wait for all Hadoop services to initiate::
 
     $ make controlled-run
 
-*****************************
-Interact with Hive over Spark
-*****************************
+******************************
+Start a shell on the Container
+******************************
 
-Sample SparkPi Application
-==========================
-
-The `sample SparkPi application <https://spark.apache.org/docs/2.4.5/running-on-yarn.html#launching-spark-on-yarn>`_ can be launched with::
-
-    $ make pi
-
-Apart from some verbose logging displayed on the console it may appear that not much has happened here.  However, since the `Spark application has been deployed in cluster mode <https://spark.apache.org/docs/2.4.5/cluster-overview.html>`_ you will need to dump the associated application ID's log to see meaningful outpuut.
-
-To get a list of Spark application logs (under YARN)::
-
-    $ make yarn-apps
-
-Then plug in an ``Application-Id`` into::
-
-    $ make yarn-app-log YARN_APPLICATION_ID=<Application-Id>
-
-To see something similar to the following::
-
-    ====================================================================
-    LogType:stdout
-    LogLastModifiedTime:Sat Apr 11 21:49:03 +0000 2020
-    LogLength:33
-    LogContents:
-    Pi is roughly 3.1398156990784956
-    
-     End of LogType:stdout
-    ***********************************************************************
-
-Submitting Custom Applications
-==============================
-
-Start a shell on the container to use ``spark-submit``::
+::
 
     $ make login
 
-More information on submitting applications to Spark can be found `here <https://spark.apache.org/docs/2.4.5/submitting-applications.html>`_
+***************************
+Interact with Hive on Spark
+***************************
 
 Using Beeline CLI (HiveServer2)
 ===============================
@@ -179,6 +149,37 @@ Only Need Spark?
 ****************
 
 The `Spark computing system <https://spark.apache.org/docs/latest/index.html>`_ is available and can be invoked as per normal.
+
+More information on submitting applications to Spark can be found `here <https://spark.apache.org/docs/2.4.5/submitting-applications.html>`_
+
+Sample SparkPi Application
+==========================
+
+The `sample SparkPi application <https://spark.apache.org/docs/2.4.5/running-on-yarn.html#launching-spark-on-yarn>`_ can be launched with::
+
+    $ make pi
+
+Apart from some verbose logging displayed on the console it may appear that not much has happened here.  However, since the `Spark application has been deployed in cluster mode <https://spark.apache.org/docs/2.4.5/cluster-overview.html>`_ you will need to dump the associated application ID's log to see meaningful output.
+
+To get a list of Spark application logs (under YARN)::
+
+    $ make yarn-apps
+
+Then plug in an ``Application-Id`` into::
+
+    $ make yarn-app-log YARN_APPLICATION_ID=<Application-Id>
+
+To see something similar to the following::
+
+    ====================================================================
+    LogType:stdout
+    LogLastModifiedTime:Sat Apr 11 21:49:03 +0000 2020
+    LogLength:33
+    LogContents:
+    Pi is roughly 3.1398156990784956
+    
+    End of LogType:stdout
+    ***********************************************************************
 
 ``pyspark``
 ===========
