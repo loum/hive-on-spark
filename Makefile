@@ -1,11 +1,14 @@
-# Include overrides (must occur before include statements).
 MAKESTER__REPO_NAME := loum
-MAKESTER__CONTAINER_NAME := hive-on-spark
+
+# Tagging convention used: <hive-version>-<spark-version>-<image-release-number>
+MAKESTER__VERSION := 3.1.2-2.4.5
+MAKESTER__RELEASE_NUMBER := 1
 
 include makester/makefiles/base.mk
 include makester/makefiles/docker.mk
 include makester/makefiles/python-venv.mk
 
+MAKESTER__CONTAINER_NAME := hive-on-spark
 MAKESTER__RUN_COMMAND := $(DOCKER) run --rm -d\
  --publish 10000:10000\
  --publish 10002:10002\
@@ -18,16 +21,6 @@ MAKESTER__RUN_COMMAND := $(DOCKER) run --rm -d\
  $(MAKESTER__SERVICE_NAME):$(HASH)
 
 init: makester-requirements
-
-bi: build-image
-
-build-image:
-	@$(DOCKER) build -t $(MAKESTER__SERVICE_NAME):$(HASH) .
-
-rmi: rm-image
-
-rm-image:
-	@$(DOCKER) rmi $(MAKESTER__SERVICE_NAME):$(HASH) || true
 
 backoff:
 	@$(PYTHON) makester/scripts/backoff -d "YARN ResourceManager" -p 8032 localhost
@@ -93,18 +86,13 @@ spark-shell: backoff
 
 help: base-help docker-help python-venv-help
 	@echo "(Makefile)\n\
-  build-image:         Build docker image $(MAKESTER__SERVICE_NAME):$(HASH) (alias bi)\n\
-  rm-image:            Delete docker image $(MAKESTER__SERVICE_NAME):$(HASH) (alias rmi) \n\
-  login:               Login to container $(MAKESTER__CONTAINER_NAME) as user \"hdfs\"\n\
-  yarn-apps:           List all YARN application IDs\n\
-  yarn-app-log:        Dump log for YARN application ID defined by \"YARN_APPLICATION_ID\"\n\
-  beeline:             Start beeline CLI on $(MAKESTER__CONTAINER_NAME)\n\
-  beeline-create:      Execute beeline command \"CREATE TABLE ...\" on $(MAKESTER__CONTAINER_NAME)\n\
-  beeline-show:        Execute beeline command \"SHOW TABLES\" on $(MAKESTER__CONTAINER_NAME)\n\
-  beeline-insert:      Execute beeline command \"INSERT INTO TABLE ...\" on $(MAKESTER__CONTAINER_NAME)\n\
-  beeline-select:      Execute beeline command \"SELECT * FROM ...\" on $(MAKESTER__CONTAINER_NAME)\n\
-  beeline-drop:        Execute beeline command \"DROP TABLE ...\" on $(MAKESTER__CONTAINER_NAME)\n\
-  pi:                  Run the sample Spark Pi application\n\
-	";
-
-.PHONY: help
+  login                Login to container $(MAKESTER__CONTAINER_NAME) as user \"hdfs\"\n\
+  yarn-apps            List all YARN application IDs\n\
+  yarn-app-log         Dump log for YARN application ID defined by \"YARN_APPLICATION_ID\"\n\
+  beeline              Start beeline CLI on $(MAKESTER__CONTAINER_NAME)\n\
+  beeline-create       Execute beeline command \"CREATE TABLE ...\" on $(MAKESTER__CONTAINER_NAME)\n\
+  beeline-show         Execute beeline command \"SHOW TABLES\" on $(MAKESTER__CONTAINER_NAME)\n\
+  beeline-insert       Execute beeline command \"INSERT INTO TABLE ...\" on $(MAKESTER__CONTAINER_NAME)\n\
+  beeline-select       Execute beeline command \"SELECT * FROM ...\" on $(MAKESTER__CONTAINER_NAME)\n\
+  beeline-drop         Execute beeline command \"DROP TABLE ...\" on $(MAKESTER__CONTAINER_NAME)\n\
+  pi                   Run the sample Spark Pi application\n"

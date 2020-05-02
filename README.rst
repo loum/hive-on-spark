@@ -44,7 +44,7 @@ For first-time setup, get the `Makester project <https://github.com/loum/makeste
 
 Keep `Makester project <https://github.com/loum/makester.git>`_ up-to-date with::
 
-    $ git submodule update --remote --merge
+    $ make submodule-update
 
 Setup the environment::
 
@@ -66,31 +66,27 @@ The image build actually builds Spark from scratch to ensure we get the correct 
 
 To build the Docker image::
 
-    $ make bi
+    $ make build-image
 
-*********
-Image Tag
-*********
+.. note::
 
-To tag the image as ``latest``::
+    Building the image creates the default tag ``MAKESTER__IMAGE_TAG_ALIAS``.
 
-    $ make tag
+********************************
+Start and Stopping the Container
+********************************
 
-Or to apply tagging convention using <hive-version>-<spark-version>-<image-release-number>::
-
-    $ make tag MAKESTER__IMAGE_TAG=3.1.2-2.4.5-1
-
-*******************
-Start the Container
-*******************
-
-::
+To run image as container::
 
     $ make run
 
 To start the container and wait for all Hadoop services to initiate::
 
     $ make controlled-run
+
+To stop the container::
+
+    $ make stop
 
 ******************************
 Start a shell on the Container
@@ -217,10 +213,28 @@ The following web interfaces are available to view configurations and logs and t
 
   - `<http://localhost:10002>`_
 
-******************
-Stop the Container
-******************
 
-::
+*********
+Image Tag
+*********
 
-    $ make stop
+.. note::
+
+    Search for existing tags with command::
+
+       $ make search-image
+
+To apply tag as per prject tagging convention ``<hive-version>-<spark-version>-<image-release-number>``::
+
+    $ make tag-version
+
+.. note::
+
+    Update versioning information in ``Makefile`` as follows:
+
+       - ``<hive-version>-<spark-version>`` - ``MAKESTER__VERSION``
+       - ``<image-release-number>`` can be set via ``MAKESTER__RELEASE_NUMBER``
+
+To tag the image as ``latest``::
+
+    $ make tag-latest
