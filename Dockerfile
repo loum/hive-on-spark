@@ -1,66 +1,77 @@
-ARG SPARK_TAG=hadoop3-1-without-hive
-ARG SPARK_VERSION=spark-2.4.5-bin-${SPARK_TAG}
-
-FROM ubuntu:bionic-20200311 AS builder
-
-RUN apt-get update && apt-get install -y --no-install-recommends\
- git\
- curl\
- openjdk-8-jdk-headless=8u242-b08-0ubuntu3~18.04
-
-RUN git clone --depth 1 --branch v2.4.5 https://github.com/apache/spark.git
-WORKDIR /spark
-ARG SPARK_TAG
 ARG SPARK_VERSION
-RUN dev/make-distribution.sh --name "${SPARK_TAG}" --tgz "-Pyarn,hadoop-provided,hadoop-3.1,parquet-provided,orc-provided"
-RUN tar xzf "${SPARK_VERSION}.tgz" && chown -R root:root "${SPARK_VERSION}"
+ARG SPARK_RELEASE
+ARG UBUNTU_BASE_IMAGE
+ARG HADOOP_HIVE_BASE_IMAGE
 
-### downloader layer end
+FROM ubuntu:$UBUNTU_BASE_IMAGE AS builder
 
-FROM loum/hadoop-hive:3.2.1-3.1.2-3
+ARG OPENJDK_8_HEADLESS
+RUN apt-get update && apt-get install -y --no-install-recommends\
+ wget\
+ ca-certificates\
+ git\
+ openjdk-8-jdk-headless=$OPENJDK_8_HEADLESS
+
+WORKDIR /tmp
+ARG SPARK_VERSION
+RUN git clone --depth 1 --branch v$SPARK_VERSION https://github.com/apache/spark.git
+
+# Build a runnable distribution.
+WORKDIR spark
+ENV MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=2g"
+ARG SPARK_RELEASE
+RUN dev/make-distribution.sh\
+ --name without-hadoop\
+ --tgz\
+ -Pyarn\
+ -Phadoop-provided
+
+### builder stage end.
+
+ARG HADOOP_HIVE_BASE_IMAGE
+FROM loum/hadoop-hive:$HADOOP_HIVE_BASE_IMAGE
 
 USER root
 
 # Install python to support pyspark.
-ARG PYTHON_VERSION=3.7
-ARG PYTHON_APT_RELEASE=3.7.5-2~18.04
+ARG PYTHON_38
 RUN apt-get update && apt-get install -y --no-install-recommends\
- "python${PYTHON_VERSION}"="${PYTHON_APT_RELEASE}" &&\
- apt-get clean &&\
- rm -rf /var/lib/apt/lists/* &&\
- update-alternatives --install /usr/bin/python "python${PYTHON_VERSION}" "/usr/bin/python${PYTHON_VERSION}" 1
+ python3.8="${PYTHON_38}" &&\
+ rm -rf /var/lib/apt/lists/*
+RUN update-alternatives --install /usr/bin/python python3 /usr/bin/python3.8 1
 
-ARG SPARK_VERSION
-
-WORKDIR /opt
-
-COPY --from=builder "/spark/${SPARK_VERSION}" spark
+ARG SPARK_RELEASE
+COPY --from=builder /tmp/spark/$SPARK_RELEASE.tgz /opt
+RUN tar zxf /opt/$SPARK_RELEASE.tgz -C /opt\
+ && ln -s /opt/$SPARK_RELEASE /opt/spark\
+ && rm /opt/$SPARK_RELEASE.tgz
 
 # Spark config.
-COPY files/spark-env.sh spark/conf/spark-env.sh
-COPY files/spark-defaults.conf spark/conf/spark-defaults.conf
+ARG SPARK_HOME=/opt/spark
+COPY files/spark-env.sh $SPARK_HOME/conf/spark-env.sh
+COPY files/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf
 
 # Hadoop YARN
-RUN mv hadoop/etc/hadoop/yarn-site.xml hadoop/etc/hadoop/yarn-site.xml.orig
-COPY files/yarn-site.xml hadoop/etc/hadoop/yarn-site.xml
+RUN mv /opt/hadoop/etc/hadoop/yarn-site.xml /opt/hadoop/etc/hadoop/yarn-site.xml.orig
+COPY files/yarn-site.xml /opt/hadoop/etc/hadoop/yarn-site.xml
 
 # Set Hive configuration settings.
 #
 # hive.execution.engine mr => spark
 # hive.exec.parallel false => true
-RUN cp hive/conf/hive-site.xml hive/conf/hive-site.xml.bak
+RUN cp /opt/hive/conf/hive-site.xml /opt/hive/conf/hive-site.xml.bak
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN cat hive/conf/hive-site.xml.bak |\
+RUN cat /opt/hive/conf/hive-site.xml.bak |\
  sed -n '1h;1!H;${g;s|execution.engine</name>\n    <value>mr|execution.engine</name>\n    <value>spark|;p;}' |\
  sed -n '1h;1!H;${g;s|exec.parallel</name>\n    <value>false|exec.parallel</name>\n    <value>true|;p;}'\
- > hive/conf/hive-site.xml
+ > /opt/hive/conf/hive-site.xml
 
-ARG SPARK_HOME=/opt/spark
-
-RUN ln -s ${SPARK_HOME}/jars/scala-library-2.11.12.jar hive/lib && \
-  ln -s ${SPARK_HOME}/jars/spark-core_2.11-2.4.5.jar hive/lib && \
-  ln -s ${SPARK_HOME}/jars/spark-unsafe_2.11-2.4.5.jar hive/lib && \
-  ln -s ${SPARK_HOME}/jars/spark-network-common_2.11-2.4.5.jar hive/lib
+ARG SPARK_VERSION
+ARG SCALA_VERSION=2.11
+RUN ln -s ${SPARK_HOME}/jars/scala-library-${SCALA_VERSION}.*.jar /opt/hive/lib && \
+  ln -s ${SPARK_HOME}/jars/spark-core_${SCALA_VERSION}-${SPARK_VERSION}.jar /opt/hive/lib && \
+  ln -s ${SPARK_HOME}/jars/spark-unsafe_${SCALA_VERSION}-${SPARK_VERSION}.jar /opt/hive/lib && \
+  ln -s ${SPARK_HOME}/jars/spark-network-common_2.11-${SPARK_VERSION}.jar /opt/hive/lib
 
 COPY scripts/spark-bootstrap.sh /spark-bootstrap.sh
 
@@ -82,7 +93,7 @@ EXPOSE 10000
 # Web UI for HiveServer2 port.
 EXPOSE 10002
 
-### start user run context.
+# Start user run context.
 USER hdfs
 WORKDIR /home/hdfs
 

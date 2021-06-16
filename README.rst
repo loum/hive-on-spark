@@ -1,12 +1,12 @@
 ###############################################
-Hive 3.1.2 on Spark 2.4.5 (on YARN) with Docker
+Hive 3.1.2 on Spark 2.4.8 (on YARN) with Docker
 ###############################################
 
 Quick and easy way to get Hive on Spark (on YARN) with Docker.
 
 See `Apache Hive on Spark docs <https://cwiki.apache.org/confluence/display/Hive/Hive+on+Spark%3A+Getting+Started>`_ for more information.
 
-Lots happening here, but in short this repository will build you a Docker image that allows you to run Hive with Spark as the compute engine.  `Spark itself uses YARN as the resource manager <https://spark.apache.org/docs/2.4.5/running-on-yarn.html>`_ which we leverage from the underlying Hadoop install.
+Lots happening here, but in short this repository will build you a Docker image that allows you to run Hive with Spark as the compute engine.  `Spark itself uses YARN as the resource manager <https://spark.apache.org/docs/2.4.8/running-on-yarn.html>`_ which we leverage from the underlying Hadoop install.
 
 See documentation on the underlying `Hive base Docker image <https://github.com/loum/hadoop-hive>`_ for details on how Hadoop/YARN has been configured.
 
@@ -14,17 +14,16 @@ See documentation on the underlying `Hive base Docker image <https://github.com/
 Quick Start
 ************
 
-Impatient and just want Hadoop quickly?::
+Impatient and just want Hive on Spark quickly?::
 
-    $ docker run --rm -ti -d \
-     --name hive-on-spark \
-     loum/hive-on-spark:latest
+  docker run --rm -ti -d --name hive-on-spark loum/hive-on-spark:latest
 
 *************
 Prerequisties
 *************
 
 - `Docker <https://docs.docker.com/install/>`_
+- `GNU make <https://www.gnu.org/software/make/manual/make.html>`_
 
 ***************
 Getting Started
@@ -32,23 +31,23 @@ Getting Started
 
 Get the code and change into the top level ``git`` project directory::
 
-    $ git clone https://github.com/loum/hive-on-spark.git && cd spark-on-hive
+  git clone https://github.com/loum/hive-on-spark.git && cd hive-on-spark
 
 .. note::
 
-    Run all commands from the top-level directory of the ``git`` repository.
+  Run all commands from the top-level directory of the ``git`` repository.
 
 For first-time setup, get the `Makester project <https://github.com/loum/makester.git>`_::
 
-    $ git submodule update --init
+  git submodule update --init
 
 Keep `Makester project <https://github.com/loum/makester.git>`_ up-to-date with::
 
-    $ make submodule-update
+  make submodule-update
 
 Setup the environment::
 
-    $ make init
+  make init
 
 ************
 Getting Help
@@ -56,21 +55,21 @@ Getting Help
 
 There should be a ``make`` target to be able to get most things done.  Check the help for more information::
 
-    $ make help
+  make help
 
 ***********
 Image Build
 ***********
 
-The image build actually builds Spark from scratch to ensure we get the correct version without the YARN libraries.  This substationally increaases the image build time.  More info can be found at the `Spark build page <http://spark.apache.org/docs/2.4.5/building-spark.html>`_
+The image build actually builds Spark from scratch to ensure we get the correct version without the YARN libraries.  This substationally increaases the image build time.  More info can be found at the `Spark build page <http://spark.apache.org/docs/2.4.8/building-spark.html>`_
 
 To build the Docker image::
 
-    $ make build-image
+  make build-image
 
 .. note::
 
-    Building the image creates the default tag ``MAKESTER__IMAGE_TAG_ALIAS``.
+  Building the image creates the default tag ``MAKESTER__IMAGE_TAG_ALIAS``.
 
 ********************************
 Start and Stopping the Container
@@ -78,15 +77,15 @@ Start and Stopping the Container
 
 To run image as container::
 
-    $ make run
+  make run
 
 To start the container and wait for all Hadoop services to initiate::
 
-    $ make controlled-run
+  make controlled-run
 
 To stop the container::
 
-    $ make stop
+  make stop
 
 ******************************
 Start a shell on the Container
@@ -94,7 +93,7 @@ Start a shell on the Container
 
 ::
 
-    $ make login
+  make login
 
 ***************************
 Interact with Hive on Spark
@@ -105,7 +104,7 @@ Using Beeline CLI (HiveServer2)
 
 Login to ``beeline`` (``!q`` to exit CLI)::
 
-    $ make beeline
+  make beeline
 
 Check the `Beeline Command Reference <https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Clients#HiveServer2Clients-Beeline%E2%80%93CommandL
 ineShell>`_ for more.
@@ -114,29 +113,29 @@ Some other handy commands to run with ``beeline`` via ``make``:
 
 Create a Hive table named ``test``::
 
-    $ make beeline-create
+  make beeline-create
 
 To show tables::
 
-    $ make beeline-show
+  make beeline-show
 
 To insert a row of data into Hive table ``test``
 
 .. note::
 
-    This will invoke the Spark execution engine through YARN.
+  This will invoke the Spark execution engine through YARN.
 
 ::
 
-    $ make beeline-insert
+  make beeline-insert
 
 To select all rows in Hive table ``test``::
 
-    $ make beeline-select
+  make beeline-select
 
 To drop the Hive table ``test``::
 
-    $ make beeline-drop
+  make beeline-drop
 
 Alternatively, port ``10000`` is exposed to allow connectivity to clients with JDBC.
 
@@ -146,50 +145,50 @@ Only Need Spark?
 
 The `Spark computing system <https://spark.apache.org/docs/latest/index.html>`_ is available and can be invoked as per normal.
 
-More information on submitting applications to Spark can be found `here <https://spark.apache.org/docs/2.4.5/submitting-applications.html>`_
+More information on submitting applications to Spark can be found `here <https://spark.apache.org/docs/2.4.8/submitting-applications.html>`_
 
 Sample SparkPi Application
 ==========================
 
-The `sample SparkPi application <https://spark.apache.org/docs/2.4.5/running-on-yarn.html#launching-spark-on-yarn>`_ can be launched with::
+The `sample SparkPi application <https://spark.apache.org/docs/2.4.8/running-on-yarn.html#launching-spark-on-yarn>`_ can be launched with::
 
-    $ make pi
+  make pi
 
-Apart from some verbose logging displayed on the console it may appear that not much has happened here.  However, since the `Spark application has been deployed in cluster mode <https://spark.apache.org/docs/2.4.5/cluster-overview.html>`_ you will need to dump the associated application ID's log to see meaningful output.
+Apart from some verbose logging displayed on the console it may appear that not much has happened here.  However, since the `Spark application has been deployed in cluster mode <https://spark.apache.org/docs/2.4.8/cluster-overview.html>`_ you will need to dump the associated application ID's log to see meaningful output.
 
 To get a list of Spark application logs (under YARN)::
 
-    $ make yarn-apps
+  make yarn-apps
 
 Then plug in an ``Application-Id`` into::
 
-    $ make yarn-app-log YARN_APPLICATION_ID=<Application-Id>
+  make yarn-app-log YARN_APPLICATION_ID=<Application-Id>
 
 To see something similar to the following::
 
-    ====================================================================
-    LogType:stdout
-    LogLastModifiedTime:Sat Apr 11 21:49:03 +0000 2020
-    LogLength:33
-    LogContents:
-    Pi is roughly 3.1398156990784956
-    
-    End of LogType:stdout
-    ***********************************************************************
+  ====================================================================
+  LogType:stdout
+  LogLastModifiedTime:Sat Apr 11 21:49:03 +0000 2020
+  LogLength:33
+  LogContents:
+  Pi is roughly 3.1398156990784956
+  
+  End of LogType:stdout
+  ***********************************************************************
 
 ``pyspark``
 ===========
 
 ::
 
-    $ make pyspark 
+  make pyspark
 
 ``spark-shell``
 ===============
 
 ::
 
-    $ make spark-shell
+  make spark-shell
 
 **************
 Web Interfaces
@@ -205,7 +204,7 @@ The following web interfaces are available to view configurations and logs and t
 
   - `<http://localhost:8088>`_
 
-- `Spark History Server web UI <https://spark.apache.org/docs/2.4.5/monitoring.html>`_
+- `Spark History Server web UI <https://spark.apache.org/docs/2.4.8/monitoring.html>`_
 
   - `<http://localhost:18080>`_
 
@@ -213,28 +212,26 @@ The following web interfaces are available to view configurations and logs and t
 
   - `<http://localhost:10002>`_
 
+***********************
+Docker Image Management
+***********************
 
-*********
-Image Tag
-*********
+Image Searches
+==============
 
-.. note::
+Search for existing Docker image tags with command::
 
-    Search for existing tags with command::
+  $ make search-image
 
-       $ make search-image
+Image Tagging
+=============
+
+By default, ``makester`` will tag the new Docker image with the current branch hash.  This provides a degree of uniqueness but is not very intuitive.  That's where the ``tag-version`` ``Makefile`` target can help.
 
 To apply tag as per prject tagging convention ``<hive-version>-<spark-version>-<image-release-number>``::
 
-    $ make tag-version
-
-.. note::
-
-    Update versioning information in ``Makefile`` as follows:
-
-       - ``<hive-version>-<spark-version>`` - ``MAKESTER__VERSION``
-       - ``<image-release-number>`` can be set via ``MAKESTER__RELEASE_NUMBER``
+  make tag-version
 
 To tag the image as ``latest``::
 
-    $ make tag-latest
+  make tag-latest
