@@ -5,19 +5,21 @@ MAKESTER__CONTAINER_NAME := hive-on-spark
 
 SPARK_VERSION := 2.4.8
 SPARK_RELEASE := spark-$(SPARK_VERSION)-bin-without-hadoop
+HIVE_VERSION := 3.1.2
+LIVY_VERSION := 0.7.1-incubating
 
 # Tagging convention used: <hive-version>-<spark-version>-<image-release-number>
-MAKESTER__VERSION := 3.1.2-$(SPARK_VERSION)
-MAKESTER__RELEASE_NUMBER := 1
+MAKESTER__VERSION :=$(HIVE_VERSION)-$(SPARK_VERSION)
+MAKESTER__RELEASE_NUMBER := 2
 
 include makester/makefiles/base.mk
 include makester/makefiles/docker.mk
 include makester/makefiles/python-venv.mk
 
-UBUNTU_BASE_IMAGE := focal-20210416
-HADOOP_HIVE_BASE_IMAGE := 3.2.1-3.1.2-4
+UBUNTU_BASE_IMAGE := focal-20210609
+HADOOP_HIVE_BASE_IMAGE := 3.2.2-3.1.2-1
 OPENJDK_8_HEADLESS := 8u292-b10-0ubuntu1~20.04
-PYTHON_38 := 3.8.5-1~20.04.3
+PYTHON_38 := 3.8.10-0ubuntu1~20.04
 
 MAKESTER__BUILD_COMMAND = $(DOCKER) build --rm\
  --no-cache\
@@ -27,6 +29,7 @@ MAKESTER__BUILD_COMMAND = $(DOCKER) build --rm\
  --build-arg HADOOP_HIVE_BASE_IMAGE=$(HADOOP_HIVE_BASE_IMAGE)\
  --build-arg OPENJDK_8_HEADLESS=$(OPENJDK_8_HEADLESS)\
  --build-arg PYTHON_38=$(PYTHON_38)\
+ --build-arg LIVY_VERSION=$(LIVY_VERSION)\
  -t $(MAKESTER__IMAGE_TAG_ALIAS) .
 
 MAKESTER__RUN_COMMAND := $(DOCKER) run --rm -d\
@@ -36,6 +39,7 @@ MAKESTER__RUN_COMMAND := $(DOCKER) run --rm -d\
  --publish 8088:8088\
  --publish 8042:8042\
  --publish 18080:18080\
+ --publish 8998:8998\
  --hostname $(MAKESTER__CONTAINER_NAME)\
  --name $(MAKESTER__CONTAINER_NAME)\
  $(MAKESTER__SERVICE_NAME):$(HASH)
@@ -78,7 +82,7 @@ pi:
  --driver-memory 1g\
  --executor-memory 1g\
  --executor-cores 1\
- /opt/spark/examples/jars/spark-examples_2.12-$(SPARK_VERSION).jar"
+ /opt/spark/examples/jars/spark-examples_2.11-$(SPARK_VERSION).jar"
 
 yarn-apps:
 	@$(DOCKER) exec -ti $(MAKESTER__CONTAINER_NAME)\

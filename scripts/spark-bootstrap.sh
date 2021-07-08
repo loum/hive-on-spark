@@ -30,6 +30,9 @@ else
     echo "ERROR: Spark HistoryServer did not start"
 fi
 
+# Start the Livy server.
+HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop SPARK_HOME=/opt/spark /opt/livy/bin/livy-server start
+
 # Block until we signal exit.
 trap 'exit 0' TERM
 while true; do sleep 0.5; done
